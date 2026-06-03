@@ -1,0 +1,38 @@
+[package]
+name = "ucum-units"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+description = "A total, conformance-tested implementation of UCUM (Unified Code for Units of Measure): parse, validate, analyze, compare and convert units."
+license = "MIT"
+repository = "https://github.com/hulo-ai/ucum-units"
+documentation = "https://docs.rs/ucum-units"
+readme = "README.md"
+keywords = ["ucum", "units", "measurement", "conversion", "dimensional"]
+categories = ["science", "parser-implementations", "mathematics"]
+exclude = ["/.github", "/.claude", "/fuzz"]
+
+[lib]
+name = "ucum"
+
+[dependencies]
+thiserror = "1"
+
+[build-dependencies]
+roxmltree = "0.20"
+
+[dev-dependencies]
+roxmltree = "0.20"
+proptest = "1"
+criterion = { version = "0.5", default-features = false }
+
+[[example]]
+name = "convert"
+path = "examples/convert.rs"
+
+[[bench]]
+name = "ucum"
+harness = false
+
+[profile.test]
+opt-level = 1

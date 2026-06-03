@@ -4,7 +4,8 @@
 //! first use; we warm it up before measuring so the benchmarks reflect
 //! steady-state cost rather than one-off initialization.
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
+use std::hint::black_box;
 use ucum::{analyze, convert, display_name, parse, validate};
 
 /// A spread of representative inputs: a base unit, a derived/compound unit, a

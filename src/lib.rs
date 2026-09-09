@@ -10,6 +10,9 @@ mod parser;
 mod quantity;
 mod tables;
 
+#[cfg(test)]
+mod build_support;
+
 pub use dimension::Dimension;
 pub use error::UcumError;
 pub use parser::UnitExpr;

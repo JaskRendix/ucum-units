@@ -4,6 +4,19 @@
 use crate::error::UcumError;
 use crate::{Analysis, Dimension};
 
+/// A representation of an HL7 FHIR Quantity data type.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FhirQuantity {
+    /// Numerical value (corresponding to FHIR `value`).
+    pub value: Option<f64>,
+    /// Unit system URI, standard for UCUM is `"http://unitsofmeasure.org"`.
+    pub system: Option<String>,
+    /// The UCUM code (corresponding to FHIR `code`).
+    pub code: Option<String>,
+    /// Human-readable display or unit representation (corresponding to FHIR `unit`).
+    pub unit: Option<String>,
+}
+
 /// A magnitude expressed in a UCUM unit.
 ///
 /// `Quantity` keeps its unit *symbolic* (as a UCUM string). Arithmetic builds a
@@ -83,6 +96,41 @@ impl Quantity {
             value: crate::convert(self.value, &self.unit, unit)?,
             unit: unit.to_string(),
         })
+    }
+
+    /// Convert this quantity into an HL7 FHIR `Quantity` structure.
+    pub fn to_fhir(&self) -> FhirQuantity {
+        FhirQuantity {
+            value: Some(self.value),
+            system: Some("http://unitsofmeasure.org".to_string()),
+            code: Some(self.unit.clone()),
+            unit: None,
+        }
+    }
+
+    /// Attempt to parse a `Quantity` from an HL7 FHIR `Quantity` structure,
+    /// validating that the system matches UCUM and a code is present.
+    pub fn try_from_fhir(fhir: &FhirQuantity) -> Result<Self, UcumError> {
+        let value = fhir.value.unwrap_or(1.0);
+        let code = fhir
+            .code
+            .as_deref()
+            .or(fhir.unit.as_deref())
+            .ok_or_else(|| UcumError::Parse {
+                pos: 0,
+                msg: "missing UCUM code or unit in FHIR Quantity".to_string(),
+            })?;
+
+        if let Some(ref sys) = fhir.system
+            && sys != "http://unitsofmeasure.org"
+        {
+            return Err(UcumError::Parse {
+                pos: 0,
+                msg: format!("unsupported quantity system: {sys}"),
+            });
+        }
+
+        Ok(Quantity::new(value, code))
     }
 }
 

@@ -13,7 +13,7 @@ mod tables;
 pub use dimension::Dimension;
 pub use error::UcumError;
 pub use parser::UnitExpr;
-pub use quantity::Quantity;
+pub use quantity::{FhirQuantity, Quantity};
 
 use analysis::{Resolved, Special};
 

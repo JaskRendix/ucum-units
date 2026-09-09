@@ -75,3 +75,51 @@ fn quantity_arithmetic() {
     approx(c.value, 0.6096);
     assert_eq!(c.unit, "m");
 }
+
+// --- FHIR Quantity Interoperability ---
+
+#[test]
+fn fhir_quantity_interoperability() {
+    let q = Quantity::new(125.0, "mg/dL");
+
+    // Test conversion to FHIR structure
+    let fhir = q.to_fhir();
+    assert_eq!(fhir.value, Some(125.0));
+    assert_eq!(fhir.system.as_deref(), Some("http://unitsofmeasure.org"));
+    assert_eq!(fhir.code.as_deref(), Some("mg/dL"));
+
+    // Test round-trip conversion from FHIR structure back to Quantity
+    let roundtrip = Quantity::try_from_fhir(&fhir).unwrap();
+    assert_eq!(roundtrip.value, 125.0);
+    assert_eq!(roundtrip.unit, "mg/dL");
+
+    // Edge case: Omitted value defaults to 1.0
+    let mut no_val_fhir = fhir.clone();
+    no_val_fhir.value = None;
+    let q_default = Quantity::try_from_fhir(&no_val_fhir).unwrap();
+    assert_eq!(q_default.value, 1.0);
+    assert_eq!(q_default.unit, "mg/dL");
+
+    // Edge case: Falling back to `unit` field when `code` is None
+    let mut fallback_fhir = fhir.clone();
+    fallback_fhir.code = None;
+    fallback_fhir.unit = Some("mmol/L".to_string());
+    let q_fallback = Quantity::try_from_fhir(&fallback_fhir).unwrap();
+    assert_eq!(q_fallback.unit, "mmol/L");
+
+    // Edge case: Omitted system URI is allowed (lenient parsing)
+    let mut no_system_fhir = fhir.clone();
+    no_system_fhir.system = None;
+    assert!(Quantity::try_from_fhir(&no_system_fhir).is_ok());
+
+    // Test rejection of invalid system URIs
+    let mut invalid_fhir = fhir.clone();
+    invalid_fhir.system = Some("http://example.com/custom-units".to_string());
+    assert!(Quantity::try_from_fhir(&invalid_fhir).is_err());
+
+    // Test rejection when both code and unit fields are missing
+    let mut missing_code_fhir = fhir;
+    missing_code_fhir.code = None;
+    missing_code_fhir.unit = None;
+    assert!(Quantity::try_from_fhir(&missing_code_fhir).is_err());
+}

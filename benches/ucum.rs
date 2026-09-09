@@ -6,7 +6,7 @@
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
-use ucum::{analyze, convert, display_name, parse, validate};
+use ucum::{Quantity, analyze, convert, display_name, parse, validate};
 
 /// A spread of representative inputs: a base unit, a derived/compound unit, a
 /// common clinical unit, an exponent-suffixed term, and a deliberately gnarly
@@ -68,12 +68,26 @@ fn bench_display_name(c: &mut Criterion) {
     });
 }
 
+fn bench_fhir(c: &mut Criterion) {
+    warm_up();
+    let q = Quantity::new(125.0, "mg/dL");
+    let fhir = q.to_fhir();
+
+    let mut g = c.benchmark_group("fhir");
+    g.bench_function("to_fhir", |b| b.iter(|| black_box(&q).to_fhir()));
+    g.bench_function("try_from_fhir", |b| {
+        b.iter(|| Quantity::try_from_fhir(black_box(&fhir)).unwrap())
+    });
+    g.finish();
+}
+
 criterion_group!(
     benches,
     bench_parse,
     bench_validate,
     bench_analyze,
     bench_convert,
-    bench_display_name
+    bench_display_name,
+    bench_fhir
 );
 criterion_main!(benches);

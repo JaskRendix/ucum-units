@@ -112,7 +112,7 @@ fn ucum_functional_tests() {
                             "[{id}] conversion: special unit unsupported ({src} -> {dst})"
                         ));
                     }
-                    Err(UcumError::UnknownAtom { code }) => {
+                    Err(UcumError::UnknownAtom { code, .. }) => {
                         skipped.push(format!(
                             "[{id}] conversion: unknown atom {code:?} ({src} -> {dst})"
                         ));
@@ -204,4 +204,45 @@ fn ucum_functional_tests() {
         }
         panic!("{} conformance case(s) failed", failures.len());
     }
+}
+
+#[test]
+fn test_unknown_atom_suggestions() {
+    let err = ucum::validate("met").unwrap_err();
+
+    match &err {
+        UcumError::UnknownAtom { code, suggestion } => {
+            assert_eq!(code, "met");
+            assert!(suggestion.is_some(), "expected a typo suggestion for 'met'");
+        }
+        _ => panic!("expected UnknownAtom error"),
+    }
+
+    let display_str = err.to_string();
+    assert!(
+        display_str.contains("did you mean"),
+        "error message should include suggestion helper: {display_str}"
+    );
+}
+
+#[test]
+fn test_unknown_atom_no_suggestion() {
+    let err = ucum::validate("completelyunknownatom").unwrap_err();
+
+    match &err {
+        UcumError::UnknownAtom { code, suggestion } => {
+            assert_eq!(code, "completelyunknownatom");
+            assert!(
+                suggestion.is_none(),
+                "expected no typo suggestion for a wild typo, got: {suggestion:?}"
+            );
+        }
+        _ => panic!("expected UnknownAtom error"),
+    }
+
+    let display_str = err.to_string();
+    assert!(
+        !display_str.contains("did you mean"),
+        "error message should not include suggestion helper when None: {display_str}"
+    );
 }

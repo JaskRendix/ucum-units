@@ -28,6 +28,7 @@ fn render(node: &Node, case: Case, out: &mut String) -> Result<(), UcumError> {
         Node::Symbol { sym, exp } => {
             let (prefix, atom) = find_atom(sym, case).ok_or_else(|| UcumError::UnknownAtom {
                 code: sym.to_string(),
+                suggestion: crate::tables::suggest_atom(sym),
             })?;
             let name = match prefix {
                 Some(p) => format!("{}{}", p.name, atom.name),

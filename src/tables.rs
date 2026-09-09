@@ -62,3 +62,41 @@ pub(crate) struct PrefixDef {
 }
 
 include!(concat!(env!("OUT_DIR"), "/ucum_tables.rs"));
+
+/// Compute the Levenshtein distance between two strings for typo suggestions.
+pub(crate) fn levenshtein_distance(a: &str, b: &str) -> usize {
+    let mut row: Vec<usize> = (0..=b.len()).collect();
+
+    for (i, ca) in a.chars().enumerate() {
+        let mut prev = row[0];
+        row[0] = i + 1;
+        for (j, cb) in b.chars().enumerate() {
+            let old = row[j + 1];
+            let cost = if ca == cb { 0 } else { 1 };
+            row[j + 1] = std::cmp::min(std::cmp::min(row[j + 1] + 1, row[j] + 1), prev + cost);
+            prev = old;
+        }
+    }
+    row[b.len()]
+}
+
+/// Find the closest matching known atom code if available.
+pub(crate) fn suggest_atom(unknown: &str) -> Option<String> {
+    let threshold = 3;
+    let mut best_match: Option<(&'static str, usize)> = None;
+
+    for atom in ATOMS {
+        let dist = levenshtein_distance(unknown, atom.code);
+        if dist < threshold {
+            if let Some((_, best_dist)) = best_match {
+                if dist < best_dist {
+                    best_match = Some((atom.code, dist));
+                }
+            } else {
+                best_match = Some((atom.code, dist));
+            }
+        }
+    }
+
+    best_match.map(|(code, _)| code.to_string())
+}

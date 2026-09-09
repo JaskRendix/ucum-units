@@ -19,12 +19,13 @@ pub enum UcumError {
         msg: String,
     },
 
-    /// A unit token was syntactically well-formed but is not a known UCUM atom
-    /// (optionally with a prefix).
-    #[error("unknown unit atom: {code}")]
+    /// An unknown unit atom was encountered.
+    #[error("unknown unit atom: {code}{}", .suggestion.as_ref().map(|s| format!(" (did you mean '{}'?)", s)).unwrap_or_default())]
     UnknownAtom {
         /// The offending token.
         code: String,
+        /// Optional typo suggestion for a close-matching known atom.
+        suggestion: Option<String>,
     },
 
     /// Two units were compared or converted but have different dimensions.

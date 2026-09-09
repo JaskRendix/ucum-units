@@ -14,7 +14,7 @@ use crate::Case;
 use crate::dimension::{Dimension, NDIM};
 use crate::error::UcumError;
 use crate::parser::{self, Node};
-use crate::tables::{ATOMS, AtomDef, AtomKind, PREFIXES, PrefixDef};
+use crate::tables::{ATOMS, AtomDef, AtomKind, PREFIXES, PrefixDef, suggest_atom};
 
 /// A UCUM special (non-multiplicative) magnitude function.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -249,6 +249,7 @@ impl BuildCtx {
             .get(code)
             .ok_or_else(|| UcumError::UnknownAtom {
                 code: code.to_string(),
+                suggestion: suggest_atom(code),
             })?;
 
         // Look up the static &'static str key so the memo can be keyed by it.
@@ -408,6 +409,7 @@ pub(crate) fn evaluate(expr: &crate::parser::UnitExpr, case: Case) -> Result<Res
     eval_with(expr.root_ref(), case, &mut |c| {
         table.get(c).copied().ok_or_else(|| UcumError::UnknownAtom {
             code: c.to_string(),
+            suggestion: suggest_atom(c),
         })
     })
 }
@@ -456,6 +458,7 @@ where
         }
         None => Err(UcumError::UnknownAtom {
             code: sym.to_string(),
+            suggestion: suggest_atom(sym),
         }),
     }
 }

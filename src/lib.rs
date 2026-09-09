@@ -217,7 +217,7 @@ pub fn parse(expr: &str) -> Result<UnitExpr, UcumError> {
 /// // The failure tells you which atom is unknown.
 /// assert!(matches!(
 ///     ucum::validate("flurble"),
-///     Err(UcumError::UnknownAtom { code }) if code == "flurble"
+///     Err(UcumError::UnknownAtom { code, .. }) if code == "flurble"
 /// ));
 /// ```
 pub fn validate(expr: &str) -> Result<(), UcumError> {
